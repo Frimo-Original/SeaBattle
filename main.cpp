@@ -31,14 +31,6 @@ private:
 				field[i][j] = 0;
 	}
 
-	void setShips() {
-		zeroingArray();
-		setFourShipDeck();
-		setThreeShipDeck();
-		setTwoShipDeck();
-		setOneShipDeck();
-	}
-
 	void setFourShipDeck()
 	{
 		using namespace sb;
@@ -233,6 +225,14 @@ private:
 	};
 
 public:
+	void setShips() {
+		zeroingArray();
+		setFourShipDeck();
+		setThreeShipDeck();
+		setTwoShipDeck();
+		setOneShipDeck();
+	}
+
 	FieldBattle() {
 		field = new int* [HEIGHT];
 
@@ -295,16 +295,47 @@ int main()
 	textPlayer.setPosition(590, 20);
 
 	FieldBattle userField{};
-	userField.print();
-	//FieldBattle computerField{};
+	FieldBattle computerField{};
 
 	while (window.isOpen())
 	{
 		Event event;
 
 		while (window.pollEvent(event)) {
-			if (event.type == Event::Closed)
+			buttonNewGame.setStatus(sb::Buttons::StatusButton::BUTTON);
+			buttonExit.setStatus(sb::Buttons::StatusButton::BUTTON);
+			Vector2i mousePosition = Mouse::getPosition(window);
+
+			switch (event.type)
+			{
+			case Event::Closed:
 				window.close();
+				break;
+
+			case Event::MouseMoved:
+				if (mousePosition.x > 130 && mousePosition.x < 330 && mousePosition.y > 450 && mousePosition.y < 530)
+					buttonNewGame.setStatus(sb::Buttons::StatusButton::BUTTON_MOUSE_MOVED);
+
+				else if (mousePosition.x > 530 && mousePosition.x < 730 && mousePosition.y > 450 && mousePosition.y < 530)
+					buttonExit.setStatus(sb::Buttons::StatusButton::BUTTON_MOUSE_MOVED);
+
+				break;
+
+			case Event::MouseButtonPressed:
+				if (mousePosition.x > 130 && mousePosition.x < 330 && mousePosition.y > 450 && mousePosition.y < 530) {
+					buttonNewGame.setStatus(sb::Buttons::StatusButton::BUTTON_PRESS);
+					userField.setShips();
+					computerField.setShips();
+				}
+
+				else if (mousePosition.x > 530 && mousePosition.x < 730 && mousePosition.y > 450 && mousePosition.y < 530) {
+					buttonExit.setStatus(sb::Buttons::StatusButton::BUTTON_PRESS);
+					window.close();
+				}
+
+				break;
+			}
+
 		}
 
 		window.clear(Color::Black);
@@ -330,7 +361,7 @@ int main()
 		int** userArray = userField.getField();
 
 		for (int i = 0; i < userField.HEIGHT; i++)
-			for (int j = 0; j < userField.WIDTH; j++) {
+			for (int j = 0; j < userField.WIDTH; j++)
 				switch (userArray[i][j]) {
 				case 1:
 					ship.setPosition(500 + j * 30, 101 + i * 30);
@@ -338,8 +369,16 @@ int main()
 					break;
 				}
 
-				
-			}
+		int** computerArray = computerField.getField();
+
+		for (int i = 0; i < computerField.HEIGHT; i++)
+			for (int j = 0; j < computerField.WIDTH; j++)
+				switch (computerArray[i][j]) {
+				case 1:
+					ship.setPosition(100 + j * 30, 101 + i * 30);
+					window.draw(ship);
+					break;
+				}
 
 		window.display();
 	}
