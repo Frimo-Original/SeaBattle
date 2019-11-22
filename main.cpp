@@ -374,7 +374,7 @@ int main()
 		for (int i = 0; i < computerField.HEIGHT; i++)
 			for (int j = 0; j < computerField.WIDTH; j++)
 				switch (computerArray[i][j]) {
-				case 1:
+				case 3:
 					ship.setPosition(100 + j * 30, 101 + i * 30);
 					window.draw(ship);
 					break;
