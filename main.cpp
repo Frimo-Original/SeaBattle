@@ -9,11 +9,9 @@
 /*
 -1 - space in which the ship cannot be put
 0 - empty cell of the playing field
-1 - single deck ship deck
-
-2 - double deck ship
-3 - three-deck ship deck
-4 - four-deck ship deck
+1 - ship
+2 - wounded ship
+3 - kill ship
 */
 
 class FieldBattle
@@ -253,6 +251,10 @@ public:
 		return field;
 	}
 
+	bool shot(int x, int y) {
+		return false;
+	}
+
 	void print()
 	{
 		for (int i = 0; i < 10; i++) {
@@ -267,32 +269,22 @@ public:
 int main()
 {
 	srand(time(0));
-
 	using namespace sf;
 
-	RenderWindow window(VideoMode(900, 600), "See battle");
+	RenderWindow window(VideoMode(900, 650), "See battle", Style::Close);
 
 	sb::Sprite fon("pictures/fon.jpg", { 0, 0 });
-	sb::Buttons::Button buttonExit{ "pictures/buttons/exit_button/exit.png", "pictures/buttons/exit_button/exit_mouse_moved.png", "pictures/buttons/exit_button/exit_press.png", {530, 450} };
-	sb::Buttons::Button buttonNewGame{ "pictures/buttons/new_game_button/new_game.png", "pictures/buttons/new_game_button/new_game_mouse_moved.png", "pictures/buttons/new_game_button/new_game_press.png", {130, 450} };
+	sb::Buttons::Button buttonExit{ "pictures/buttons/exit_button/exit.png", "pictures/buttons/exit_button/exit_mouse_moved.png", "pictures/buttons/exit_button/exit_press.png", {530, 510} };
+	sb::Bounds boundsExit = buttonExit.getBounds();
+	sb::Buttons::Button buttonNewGame{ "pictures/buttons/new_game_button/new_game.png", "pictures/buttons/new_game_button/new_game_mouse_moved.png", "pictures/buttons/new_game_button/new_game_press.png", {130, 510} };
+	sb::Bounds boundsNewGame = buttonNewGame.getBounds();
 	sb::Sprite ship("pictures/ships/ship.png", { 0, 0 });
 
-	Font font;
-	font.loadFromFile("fonts/comic.ttf");
+	sb::Text textComputer{ "Computer", {150, 20}, Color::Blue, 40 };
+	sb::Text textPlayer{ "Player", {590, 20}, Color::Blue, 40 };
+	sb::Text textRun{ "Running: ", {300, 440}, Color::Blue, 40};
 
-	Text textComputer;
-	textComputer.setFont(font);
-	textComputer.setString("Computer");
-	textComputer.setCharacterSize(40);
-	textComputer.setFillColor(Color::Blue);
-	textComputer.setPosition(150, 20);
-
-	Text textPlayer;
-	textPlayer.setFont(font);
-	textPlayer.setString("Player");
-	textPlayer.setCharacterSize(40);
-	textPlayer.setFillColor(Color::Blue);
-	textPlayer.setPosition(590, 20);
+	bool isRun = true;  //true - player, false - computer
 
 	FieldBattle userField{};
 	FieldBattle computerField{};
@@ -313,29 +305,35 @@ int main()
 				break;
 
 			case Event::MouseMoved:
-				if (mousePosition.x > 130 && mousePosition.x < 330 && mousePosition.y > 450 && mousePosition.y < 530)
+				if (mousePosition.x > boundsNewGame.pos.x&& mousePosition.x < boundsNewGame.size.x && mousePosition.y > boundsNewGame.pos.y&& mousePosition.y < boundsNewGame.size.y)
 					buttonNewGame.setStatus(sb::Buttons::StatusButton::BUTTON_MOUSE_MOVED);
 
-				else if (mousePosition.x > 530 && mousePosition.x < 730 && mousePosition.y > 450 && mousePosition.y < 530)
+				else if (mousePosition.x > boundsExit.pos.x&& mousePosition.x < boundsExit.size.x && mousePosition.y > boundsExit.pos.y&& mousePosition.y < boundsExit.size.y)
 					buttonExit.setStatus(sb::Buttons::StatusButton::BUTTON_MOUSE_MOVED);
 
 				break;
 
 			case Event::MouseButtonPressed:
-				if (mousePosition.x > 130 && mousePosition.x < 330 && mousePosition.y > 450 && mousePosition.y < 530) {
+				if (mousePosition.x > boundsNewGame.pos.x&& mousePosition.x < boundsNewGame.size.x && mousePosition.y > boundsNewGame.pos.y&& mousePosition.y < boundsNewGame.size.y) {
 					buttonNewGame.setStatus(sb::Buttons::StatusButton::BUTTON_PRESS);
 					userField.setShips();
 					computerField.setShips();
 				}
 
-				else if (mousePosition.x > 530 && mousePosition.x < 730 && mousePosition.y > 450 && mousePosition.y < 530) {
+				else if (mousePosition.x > boundsExit.pos.x&& mousePosition.x < boundsExit.size.x && mousePosition.y > boundsExit.pos.y&& mousePosition.y < boundsExit.size.y) {
 					buttonExit.setStatus(sb::Buttons::StatusButton::BUTTON_PRESS);
 					window.close();
 				}
 
+				//Выделение клеток поля компьютера
+
+				/*else if ()
+				{
+
+				}*/
+
 				break;
 			}
-
 		}
 
 		window.clear(Color::Black);
@@ -346,6 +344,14 @@ int main()
 
 		window.draw(textComputer);
 		window.draw(textPlayer);
+
+		if (isRun)
+			textRun.setString("Run: player");
+
+		else
+			textRun.setString("Run: computer");
+
+		window.draw(textRun);
 
 		window.draw(buttonExit.getSprite());
 		window.draw(buttonNewGame.getSprite());
