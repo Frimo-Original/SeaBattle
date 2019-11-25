@@ -12,6 +12,7 @@
 1 - ship
 2 - wounded ship
 3 - kill ship
+4 - was shot
 */
 
 class FieldBattle
@@ -210,11 +211,7 @@ private:
 		else
 			return true;
 	}
-
-	int randomGenerate(int upperBound) {
-		return rand() % upperBound;
-	}
-
+	//fdfdf
 	enum RoutesShip {
 		TOP,
 		RIGHT,
@@ -251,8 +248,31 @@ public:
 		return field;
 	}
 
-	bool shot(int x, int y) {
-		return false;
+	int randomGenerate(int upperBound) {
+		return rand() % upperBound;
+	}
+
+	bool shot(int x, int y)
+	{
+		if (checkCoordinate(x, y))
+		{
+			if (field[y][x] == 0 || field[y][x] == -1) {
+				field[y][x] = 4;
+				return true;
+			}
+
+			else if (field[y][x] == 4 || field[y][x] == 2 || field[y][x] == 3)
+				return false;
+
+			else if (field[y][x] == 1) {
+				field[y][x] = 2;
+				//доделать
+				return true;
+			}
+		}
+
+		else
+			return false;
 	}
 
 	void print()
@@ -278,13 +298,20 @@ int main()
 	sb::Bounds boundsExit = buttonExit.getBounds();
 	sb::Buttons::Button buttonNewGame{ "pictures/buttons/new_game_button/new_game.png", "pictures/buttons/new_game_button/new_game_mouse_moved.png", "pictures/buttons/new_game_button/new_game_press.png", {130, 510} };
 	sb::Bounds boundsNewGame = buttonNewGame.getBounds();
+
 	sb::Sprite ship("pictures/ships/ship.png", { 0, 0 });
+	sb::Sprite shipWounded("pictures/ships/wounded_ship.png", { 0, 0 });
+	sb::Sprite shipKill("pictures/ships/kill_ship.png", { 0, 0 });
+	sb::Sprite bomb("pictures/bomb.jpeg", { 0, 0 });
+
+	sb::Sprite cursor("pictures/cursor.png", { 0, 0 });
 
 	sb::Text textComputer{ "Computer", {150, 20}, Color::Blue, 40 };
 	sb::Text textPlayer{ "Player", {590, 20}, Color::Blue, 40 };
 	sb::Text textRun{ "Running: ", {300, 440}, Color::Blue, 40};
 
 	bool isRun = true;  //true - player, false - computer
+	bool isCursor = false;  //true - on field, false - not on field
 
 	FieldBattle userField{};
 	FieldBattle computerField{};
@@ -297,6 +324,7 @@ int main()
 			buttonNewGame.setStatus(sb::Buttons::StatusButton::BUTTON);
 			buttonExit.setStatus(sb::Buttons::StatusButton::BUTTON);
 			Vector2i mousePosition = Mouse::getPosition(window);
+			isCursor = false;
 
 			switch (event.type)
 			{
@@ -310,6 +338,11 @@ int main()
 
 				else if (mousePosition.x > boundsExit.pos.x&& mousePosition.x < boundsExit.size.x && mousePosition.y > boundsExit.pos.y&& mousePosition.y < boundsExit.size.y)
 					buttonExit.setStatus(sb::Buttons::StatusButton::BUTTON_MOUSE_MOVED);
+
+				else if (mousePosition.x > 100 && mousePosition.x < 400 && mousePosition.y > 100 && mousePosition.y < 400) {
+					cursor.setPosition(100 + ((mousePosition.x - 100) / 30) * 30, 101 + ((mousePosition.y - 100) / 30) * 30);
+					isCursor = true;
+				}
 
 				break;
 
@@ -325,15 +358,25 @@ int main()
 					window.close();
 				}
 
-				//Выделение клеток поля компьютера
-
-				/*else if ()
-				{
-
-				}*/
-
+				else if (mousePosition.x > 100 && mousePosition.x < 400 && mousePosition.y > 100 && mousePosition.y < 400)
+					if (isRun)
+						if (computerField.shot((mousePosition.x - 100) / 30, (mousePosition.y - 100) / 30))
+							isRun = false;  //running computer
 				break;
 			}
+		}
+
+		//std::cout << "for debug" << std::endl;
+
+		if (!isRun) {
+			int shotX, shotY;
+
+			do {
+				shotX = computerField.randomGenerate(10);
+				shotY = computerField.randomGenerate(10);
+			} while (!userField.shot(shotX, shotY));
+
+			isRun = true;  //step user
 		}
 
 		window.clear(Color::Black);
@@ -350,6 +393,9 @@ int main()
 
 		else
 			textRun.setString("Run: computer");
+
+		if (isCursor)
+			window.draw(cursor);
 
 		window.draw(textRun);
 
@@ -369,9 +415,24 @@ int main()
 		for (int i = 0; i < userField.HEIGHT; i++)
 			for (int j = 0; j < userField.WIDTH; j++)
 				switch (userArray[i][j]) {
-				case 1:
+				case 1:  //ship
 					ship.setPosition(500 + j * 30, 101 + i * 30);
 					window.draw(ship);
+					break;
+
+				case 2:  //wounded ship
+					shipWounded.setPosition(500 + j * 30, 101 + i * 30);
+					window.draw(shipWounded);
+					break;
+
+				case 3:  //kill ship
+					shipKill.setPosition(500 + j * 30, 101 + i * 30);
+					window.draw(shipKill);
+					break;
+
+				case 4:  //was short
+					bomb.setPosition(500 + j * 30, 101 + i * 30);
+					window.draw(bomb);
 					break;
 				}
 
@@ -380,9 +441,19 @@ int main()
 		for (int i = 0; i < computerField.HEIGHT; i++)
 			for (int j = 0; j < computerField.WIDTH; j++)
 				switch (computerArray[i][j]) {
-				case 3:
-					ship.setPosition(100 + j * 30, 101 + i * 30);
-					window.draw(ship);
+				case 2:  //wounded ship
+					shipWounded.setPosition(100 + j * 30, 101 + i * 30);
+					window.draw(shipWounded);
+					break;
+
+				case 3:  //kill ship
+					shipKill.setPosition(100 + j * 30, 101 + i * 30);
+					window.draw(shipKill);
+					break;
+
+				case 4:  //was short
+					bomb.setPosition(100 + j * 30, 101 + i * 30);
+					window.draw(bomb);
 					break;
 				}
 
