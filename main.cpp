@@ -209,7 +209,6 @@ private:
 			}
 
 			if (isKill) {
-
 				for (int i = y; i <= y + amountBottom; i++)
 					field[i][x] = CellStatus::KILL;
 
@@ -404,6 +403,11 @@ public:
 	}
 };
 
+class IIComputer
+{
+
+};
+
 int main()
 {
 	srand(time(0));
@@ -430,6 +434,7 @@ int main()
 
 	bool isRun = true;  //true - player, false - computer
 	bool isCursor = false;  //true - on field, false - not on field
+	//bool isWinner;
 
 	FieldBattle userField{};
 	FieldBattle computerField{};
@@ -442,7 +447,7 @@ int main()
 			buttonNewGame.setStatus(sb::Buttons::StatusButton::BUTTON);
 			buttonExit.setStatus(sb::Buttons::StatusButton::BUTTON);
 			Vector2i mousePosition = Mouse::getPosition(window);
-			isCursor = false;
+			isCursor = false;  //true - cursor mouse in field
 
 			switch (event.type)
 			{
