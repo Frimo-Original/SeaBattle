@@ -23,6 +23,7 @@ public:
 
 private:
 	int** field;
+	int amountWounded;
 
 	void zeroingArray() {
 		for (int i = 0; i < HEIGHT; i++)
@@ -327,6 +328,8 @@ private:
 public:
 	void setShips() {
 		zeroingArray();
+		amountWounded = 0;
+
 		setFourShipDeck();
 		setThreeShipDeck();
 		setTwoShipDeck();
@@ -337,6 +340,7 @@ public:
 
 	FieldBattle() {
 		field = new int* [HEIGHT];
+		amountWounded = 0;
 
 		for (int i = 0; i < HEIGHT; i++)
 			field[i] = new int[WIDTH];
@@ -373,6 +377,7 @@ public:
 				return 0;
 
 			else if (field[y][x] == CellStatus::SHIP) { //check on kill ship
+				amountWounded += 1;
 				field[y][x] = CellStatus::WOUNDED;
 				checkKillShip(x, y);
 
@@ -382,6 +387,10 @@ public:
 
 		else
 			return 0;
+	}
+
+	bool isAllKill() {
+		return (amountWounded == 20 ? true : false);
 	}
 
 	void print()
@@ -424,7 +433,6 @@ int main()
 
 	FieldBattle userField{};
 	FieldBattle computerField{};
-	computerField.print();
 
 	while (window.isOpen())
 	{
