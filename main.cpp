@@ -185,10 +185,10 @@ private:
 				if (!checkCoordinate(x, i) || field[i][x] == CellStatus::EMTY || field[i][x] == CellStatus::PAST)
 					break;
 
-				else if (field[i][x] == 2)
+				else if (field[i][x] == CellStatus::WOUNDED)
 					amountBottom += 1;
 
-				else if (field[i][x] == 1) {
+				else if (field[i][x] == CellStatus::SHIP) {
 					isKill = false;
 					break;
 				}
@@ -198,10 +198,10 @@ private:
 				if (!checkCoordinate(x, i) || field[i][x] == CellStatus::EMTY || field[i][x] == CellStatus::PAST)
 					break;
 
-				else if (field[i][x] == 2)
+				else if (field[i][x] == CellStatus::WOUNDED)
 					amountTop += 1;
 
-				else if (field[i][x] == 1) {
+				else if (field[i][x] == CellStatus::SHIP) {
 					isKill = false;
 					break;
 				}
@@ -210,10 +210,10 @@ private:
 			if (isKill) {
 
 				for (int i = y; i <= y + amountBottom; i++)
-					field[i][x] = 3;
+					field[i][x] = CellStatus::KILL;
 
 				for (int i = y; i >= y - amountTop; i--)
-					field[i][x] = 3;
+					field[i][x] = CellStatus::KILL;
 			}
 		}
 
@@ -240,10 +240,10 @@ private:
 				if (!checkCoordinate(i, y) || field[y][i] == CellStatus::EMTY || field[y][y] == CellStatus::PAST)
 					break;
 
-				else if (field[y][i] == 2)
+				else if (field[y][i] == CellStatus::WOUNDED)
 					amountLeft += 1;
 
-				else if (field[y][i] == 1) {
+				else if (field[y][i] == CellStatus::SHIP) {
 					isKill = false;
 					break;
 				}
@@ -252,10 +252,10 @@ private:
 			if (isKill) {
 
 				for (int i = x; i <= x + amountRight; i++)
-					field[y][i] = 3;
+					field[y][i] = CellStatus::KILL;
 
 				for (int i = x; i >= x - amountLeft; i--)
-					field[y][i] = 3;
+					field[y][i] = CellStatus::KILL;
 			}
 		}
 
@@ -269,7 +269,7 @@ private:
 		{
 		case RoutesShip::TOP:
 			for (int i = head.y; i > head.y - sizeShip; i--) {
-				field[i][head.x] = 1;
+				field[i][head.x] = CellStatus::SHIP;
 				surroundCell(head.x, i);
 			}
 
@@ -277,7 +277,7 @@ private:
 
 		case RoutesShip::RIGHT:
 			for (int i = head.x; i < head.x + sizeShip; i++) {
-				field[head.y][i] = 1;
+				field[head.y][i] = CellStatus::SHIP;
 				surroundCell(i, head.y);
 			}
 
@@ -285,7 +285,7 @@ private:
 
 		case RoutesShip::BOTTOM:
 			for (int i = head.y; i < head.y + sizeShip; i++) {
-				field[i][head.x] = 1;
+				field[i][head.x] = CellStatus::SHIP;
 				surroundCell(head.x, i);
 			}
 
@@ -293,7 +293,7 @@ private:
 
 		case RoutesShip::LEFT:
 			for (int i = head.x; i > head.x - sizeShip; i--) {
-				field[head.y][i] = 1;
+				field[head.y][i] = CellStatus::SHIP;
 				surroundCell(i, head.y);
 			}
 
@@ -316,7 +316,7 @@ private:
 		LEFT
 	};
 
-	enum CellStatus {
+	static enum CellStatus {
 		EMTY,
 		SHIP,
 		WOUNDED,
@@ -363,16 +363,17 @@ public:
 	{
 		if (checkCoordinate(x, y))
 		{
-			if (field[y][x] == 0) {
-				field[y][x] = 4;  //past
+			if (field[y][x] == CellStatus::EMTY) {
+				field[y][x] = CellStatus::PAST;  //past
+
 				return 2;
 			}
 
-			else if (field[y][x] == 4 || field[y][x] == 2 || field[y][x] == 3)
+			else if (field[y][x] == CellStatus::PAST || field[y][x] == CellStatus::WOUNDED || field[y][x] == CellStatus::KILL)
 				return 0;
 
-			else if (field[y][x] == 1) { //check on kill ship
-				field[y][x] = 2;
+			else if (field[y][x] == CellStatus::SHIP) { //check on kill ship
+				field[y][x] = CellStatus::WOUNDED;
 				checkKillShip(x, y);
 
 				return 1;
