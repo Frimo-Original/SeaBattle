@@ -110,6 +110,13 @@ private:
 			field[y][x - 1] = -1;
 	}
 
+	void replaceEnvironment() {
+		for (int i = 0; i < HEIGHT; i++)
+			for (int j = 0; j < WIDTH; j++)
+				if (field[i][j] == -1)
+					field[i][j] = 0;
+	}
+
 	void setShipPlacement(int& route, sb::Coordinate& head, int sizeShip) {
 		bool flag = true;
 
@@ -166,6 +173,96 @@ private:
 		}
 	}
 
+	void checkKillShip(int x, int y)  //(x, y) - coordinats shot and hit
+	{
+		//Top and bottom, vertical
+		if ((checkCoordinate(x, y - 1) && (field[y - 1][x] == CellStatus::WOUNDED || field[y - 1][x] == CellStatus::SHIP)) || (checkCoordinate(x, y + 1) && (field[y + 1][x] == CellStatus::WOUNDED || field[y + 1][x] == CellStatus::SHIP)))
+		{
+			int amountBottom = 0, amountTop = 0;
+			bool isKill = true;
+
+			for (int i = y + 1; ; i++) {
+				if (!checkCoordinate(x, i) || field[i][x] == CellStatus::EMTY || field[i][x] == CellStatus::PAST)
+					break;
+
+				else if (field[i][x] == 2)
+					amountBottom += 1;
+
+				else if (field[i][x] == 1) {
+					isKill = false;
+					break;
+				}
+			}
+
+			for (int i = y - 1; ; i--) {
+				if (!checkCoordinate(x, i) || field[i][x] == CellStatus::EMTY || field[i][x] == CellStatus::PAST)
+					break;
+
+				else if (field[i][x] == 2)
+					amountTop += 1;
+
+				else if (field[i][x] == 1) {
+					isKill = false;
+					break;
+				}
+			}
+
+			if (isKill) {
+
+				for (int i = y; i <= y + amountBottom; i++)
+					field[i][x] = 3;
+
+				for (int i = y; i >= y - amountTop; i--)
+					field[i][x] = 3;
+			}
+		}
+
+		//Right and left, horizontal
+		else if ((checkCoordinate(x + 1, y) && (field[y][x + 1] == CellStatus::WOUNDED || field[y][x + 1] == CellStatus::SHIP)) || (checkCoordinate(x - 1, y) && (field[y][x - 1] == CellStatus::WOUNDED || field[y][x - 1] == CellStatus::SHIP)))
+		{
+			int amountRight = 0, amountLeft = 0;
+			bool isKill = true;
+
+			for (int i = x + 1; ; i++) {
+				if (!checkCoordinate(i, y) || field[y][i] == CellStatus::EMTY || field[y][i] == CellStatus::PAST)
+					break;
+
+				else if (field[y][i] == CellStatus::WOUNDED)
+					amountRight += 1;
+
+				else if (field[y][i] == CellStatus::SHIP) {
+					isKill = false;
+					break;
+				}
+			}
+
+			for (int i = x - 1; ; i--) {
+				if (!checkCoordinate(i, y) || field[y][i] == CellStatus::EMTY || field[y][y] == CellStatus::PAST)
+					break;
+
+				else if (field[y][i] == 2)
+					amountLeft += 1;
+
+				else if (field[y][i] == 1) {
+					isKill = false;
+					break;
+				}
+			}
+
+			if (isKill) {
+
+				for (int i = x; i <= x + amountRight; i++)
+					field[y][i] = 3;
+
+				for (int i = x; i >= x - amountLeft; i--)
+					field[y][i] = 3;
+			}
+		}
+
+		else
+			field[y][x] = CellStatus::KILL;
+	}
+
 	void arrangeShip(int &route, sb::Coordinate &head, int sizeShip)
 	{
 		switch (route)
@@ -211,12 +308,20 @@ private:
 		else
 			return true;
 	}
-	//fdfdf
+	
 	enum RoutesShip {
 		TOP,
 		RIGHT,
 		BOTTOM,
 		LEFT
+	};
+
+	enum CellStatus {
+		EMTY,
+		SHIP,
+		WOUNDED,
+		KILL,
+		PAST
 	};
 
 public:
@@ -226,6 +331,8 @@ public:
 		setThreeShipDeck();
 		setTwoShipDeck();
 		setOneShipDeck();
+
+		replaceEnvironment();
 	}
 
 	FieldBattle() {
@@ -252,27 +359,28 @@ public:
 		return rand() % upperBound;
 	}
 
-	bool shot(int x, int y)
+	int shot(int x, int y)  //0 - error shot, 1 - hit, 2 - past
 	{
 		if (checkCoordinate(x, y))
 		{
-			if (field[y][x] == 0 || field[y][x] == -1) {
-				field[y][x] = 4;
-				return true;
+			if (field[y][x] == 0) {
+				field[y][x] = 4;  //past
+				return 2;
 			}
 
 			else if (field[y][x] == 4 || field[y][x] == 2 || field[y][x] == 3)
-				return false;
+				return 0;
 
-			else if (field[y][x] == 1) {
+			else if (field[y][x] == 1) { //check on kill ship
 				field[y][x] = 2;
-				//доделать
-				return true;
+				checkKillShip(x, y);
+
+				return 1;
 			}
 		}
 
 		else
-			return false;
+			return 0;
 	}
 
 	void print()
@@ -315,6 +423,7 @@ int main()
 
 	FieldBattle userField{};
 	FieldBattle computerField{};
+	computerField.print();
 
 	while (window.isOpen())
 	{
@@ -360,24 +469,13 @@ int main()
 
 				else if (mousePosition.x > 100 && mousePosition.x < 400 && mousePosition.y > 100 && mousePosition.y < 400)
 					if (isRun)
-						if (computerField.shot((mousePosition.x - 100) / 30, (mousePosition.y - 100) / 30))
+						if (computerField.shot((mousePosition.x - 100) / 30, (mousePosition.y - 100) / 30) != 0)
 							isRun = false;  //running computer
 				break;
 			}
 		}
 
 		//std::cout << "for debug" << std::endl;
-
-		if (!isRun) {
-			int shotX, shotY;
-
-			do {
-				shotX = computerField.randomGenerate(10);
-				shotY = computerField.randomGenerate(10);
-			} while (!userField.shot(shotX, shotY));
-
-			isRun = true;  //step user
-		}
 
 		window.clear(Color::Black);
 
@@ -396,6 +494,17 @@ int main()
 
 		if (isCursor)
 			window.draw(cursor);
+
+		if (!isRun) {
+			int shotX, shotY;
+
+			do {
+				shotX = computerField.randomGenerate(10);
+				shotY = computerField.randomGenerate(10);
+			} while (!userField.shot(shotX, shotY));
+
+			isRun = true;  //step user
+		}
 
 		window.draw(textRun);
 
