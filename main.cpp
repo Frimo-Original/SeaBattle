@@ -437,8 +437,10 @@ public:
 		this->userField = userField;
 	}
 
-	int run()
+	int run()  //one step
 	{
+		std::cout << "isRun" << " isHit = " << isHit << std::endl;
+
 		if (!isHit) { //пытается ранить корабль
 			routeShot = 1;
 
@@ -449,15 +451,17 @@ public:
 			}
 			while (resultShot == 0);
 
-			std::cout << resultShot << std::endl;
+			std::cout << "resultShot = " << resultShot << "  x = " << x << " Y = " << y << std::endl;
 
 			if (resultShot == 1)  //hit
 				isHit = true;
 		}
 
 		else { //добивает
-			if (routeShip == RoutesShip::NONE)  //направление корабля неизвестно
+			if (routeShip == RoutesShip::NONE)  //направление корабля неизвестно, то выстреливаем в поисках направления
 			{
+				std::cout << "routeShip = NONE" << std::endl;
+
 				if ((userField.checkCoordinate(x, y - 1) && (resultShot = userField.shot(x, y - 1)) != 0) || (userField.checkCoordinate(x, y + 1) && (resultShot = userField.shot(x, y + 1)) != 0))  //Top or bottom
 					if (resultShot == 1)  //hit
 						routeShip = RoutesShip::VERTICAL;
@@ -468,6 +472,8 @@ public:
 
 				if (resultShot == 3)
 					isHit = false;
+
+				std::cout << "routeShip = " << routeShip << std::endl;
 			}
 
 			else if (routeShip == RoutesShip::VERTICAL)
@@ -653,8 +659,10 @@ int main()
 					if (isRun) {
 						int resultShot = computerField.shot((mousePosition.x - 100) / 30, (mousePosition.y - 100) / 30);
 
-						if (resultShot == 2)
+						if (resultShot == 2) {
 							isRun = false;  //running computer
+							//computerField.print();
+						}
 					}
 
 				break;
@@ -681,13 +689,19 @@ int main()
 		if (isCursor)
 			window.draw(cursor);
 
-		/*while (!isRun) {
-			std::cout << "for debug" << std::endl;
+		int jj = 0;
+
+		while (!isRun) {
 			int computerResultShot = computerII.run();
+
+			/*if (jj > 0)
+				sleep(sf::milliseconds(1000));*/
 
 			if (computerResultShot == 2)
 				isRun = true;
-		}*/
+			else
+				jj++;
+		}
 
 		/*if (!isRun) {
 			int shotX, shotY;
