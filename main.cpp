@@ -365,39 +365,47 @@ public:
 		return field;
 	}
 
-	int randomGenerate(int upperBound) {
+	static int randomGenerate(int upperBound) {
 		return rand() % upperBound;
 	}
 
-	int shot(int x, int y)  //0 - error shot, 1 - hit, 2 - past, 3 - kill, 4 - already hit
+	static enum ResultShot {
+		NOT_ALLOWED_SHOT,
+		HIT_SHOT,
+		PAST_SHOT,
+		KILL_SHOT,
+		SHIP_ALREADY_WAS_WOUNDED_SHOT
+	};
+
+	int shot(int x, int y)  //0 - error shot, 1 - hit, 2 - past, 3 - kill, 4 - ship was already wounded
 	{
 		if (checkCoordinate(x, y))
 		{
 			if (field[y][x] == CellStatus::EMTY) {
 				field[y][x] = CellStatus::PAST;  //past
 
-				return 2;
+				return ResultShot::PAST_SHOT;
 			}
 
 			else if (field[y][x] == CellStatus::PAST || field[y][x] == CellStatus::KILL)
-				return 0;
+				return ResultShot::NOT_ALLOWED_SHOT;
 
 			else if (field[y][x] == CellStatus::WOUNDED)
-				return 4;
+				return ResultShot::SHIP_ALREADY_WAS_WOUNDED_SHOT;
 
 			else if (field[y][x] == CellStatus::SHIP) { //check on kill ship
 				amountWounded += 1;
 				field[y][x] = CellStatus::WOUNDED;
 
 				if (checkKillShip(x, y))
-					return 3;
+					return ResultShot::KILL_SHOT;
 				
-				return 1;
+				return ResultShot::HIT_SHOT;
 			}
 		}
 
 		else
-			return 0;
+			return ResultShot::NOT_ALLOWED_SHOT;
 	}
 
 	bool isAllKill() {
@@ -415,7 +423,7 @@ public:
 	}
 };
 
-class IIComputer
+/*class IIComputer
 {
 private:
 	FieldBattle userField;
@@ -575,6 +583,111 @@ public:
 			}
 		}
 
+		std::cout << "resultShot(return) = " << resultShot << std::endl;
+		return resultShot;
+	}
+};*/
+
+class IIComputer
+{
+private:
+	FieldBattle userField;
+	bool isHit;
+	int xShot, yShot;
+
+	enum RoutesShip {
+		NONE,
+		HORIZONTAL,
+		VERTICAL
+	};
+
+	RoutesShip routeShip;
+
+public:
+	IIComputer(FieldBattle& userField) : isHit{ false }, routeShip{RoutesShip::NONE} {
+		this->userField = userField;
+	}
+
+	int run()  //one step computer
+	{
+		int resultShot;
+
+		if (isHit) {
+			if (routeShip == RoutesShip::NONE)
+			{
+				int routeShot = FieldBattle::randomGenerate(4);
+
+				while (true)
+				{
+					switch (routeShot)
+					{
+					case 0:  //TOP
+						resultShot = userField.shot(xShot, yShot - 1);
+						break;
+					case 1:  //RIGHT
+						resultShot = userField.shot(xShot + 1, yShot);
+						break;
+					case 2:  //BOTTOM
+						resultShot = userField.shot(xShot, yShot + 1);
+						break;
+					case 3:  //LEFT
+						resultShot = userField.shot(xShot - 1, yShot);
+						break;
+					}
+
+					if (resultShot == FieldBattle::ResultShot::NOT_ALLOWED_SHOT) {
+						routeShot = FieldBattle::randomGenerate(4);
+						continue;
+					}
+
+					else if (resultShot == FieldBattle::ResultShot::PAST_SHOT)
+						break;
+
+					else if (resultShot == FieldBattle::ResultShot::HIT_SHOT) {
+						switch (routeShot)
+						{
+						case 0 && 2:
+							routeShip = RoutesShip::VERTICAL;
+							break;
+						case 1 && 3:
+							routeShip = RoutesShip::HORIZONTAL;
+							break;
+						}
+
+						break;
+					}
+
+					else if (resultShot == FieldBattle::ResultShot::KILL_SHOT) {
+						isHit = false;
+						break;
+					}
+				}
+			}
+
+			else if (routeShip == RoutesShip::VERTICAL)
+			{
+				
+			}
+
+			else if (routeShip == RoutesShip::HORIZONTAL)
+			{
+				
+			}
+
+			//std::cout << routeShip << std::endl;
+		}
+
+		else { //пытается ранить корабль
+			do {
+				xShot = userField.randomGenerate(10);
+				yShot = userField.randomGenerate(10);
+				resultShot = userField.shot(xShot, yShot);
+			} while (resultShot == FieldBattle::ResultShot::NOT_ALLOWED_SHOT || resultShot == FieldBattle::ResultShot::SHIP_ALREADY_WAS_WOUNDED_SHOT);
+
+			if (resultShot == FieldBattle::ResultShot::HIT_SHOT)  //hit
+				isHit = true;
+		}
+
 		return resultShot;
 	}
 };
@@ -659,7 +772,9 @@ int main()
 					if (isRun) {
 						int resultShot = computerField.shot((mousePosition.x - 100) / 30, (mousePosition.y - 100) / 30);
 
-						if (resultShot == 2) {
+						if (resultShot == FieldBattle::ResultShot::PAST_SHOT
+							|| resultShot == FieldBattle::ResultShot::NOT_ALLOWED_SHOT
+							|| resultShot == FieldBattle::ResultShot::SHIP_ALREADY_WAS_WOUNDED_SHOT) {
 							isRun = false;  //running computer
 							//computerField.print();
 						}
@@ -689,30 +804,14 @@ int main()
 		if (isCursor)
 			window.draw(cursor);
 
-		int jj = 0;
-
-		while (!isRun) {
+		//run computer
+		if (!isRun) {
+			std::cout << "run Computer" << std::endl;
 			int computerResultShot = computerII.run();
 
-			/*if (jj > 0)
-				sleep(sf::milliseconds(1000));*/
-
-			if (computerResultShot == 2)
+			if (computerResultShot == FieldBattle::ResultShot::PAST_SHOT)
 				isRun = true;
-			else
-				jj++;
 		}
-
-		/*if (!isRun) {
-			int shotX, shotY;
-
-			do {
-				shotX = computerField.randomGenerate(10);
-				shotY = computerField.randomGenerate(10);
-			} while (!userField.shot(shotX, shotY));
-
-			isRun = true;  //step user
-		}*/
 
 		window.draw(textRun);
 
