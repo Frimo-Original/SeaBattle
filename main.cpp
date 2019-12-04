@@ -423,171 +423,6 @@ public:
 	}
 };
 
-/*class IIComputer
-{
-private:
-	FieldBattle userField;
-	bool isHit = false;
-	int x, y;
-	int resultShot;
-	int routeShot = 1;  //1 - top or right, 2 - bottom or left
-
-	enum RoutesShip {
-		NONE,
-		HORIZONTAL,
-		VERTICAL
-	};
-
-	RoutesShip routeShip = RoutesShip::NONE;  //0 - not route, 1 - horizontal, 2 - vertical
-
-public:
-	IIComputer(FieldBattle& userField) {
-		this->userField = userField;
-	}
-
-	int run()  //one step
-	{
-		std::cout << "isRun" << " isHit = " << isHit << std::endl;
-
-		if (!isHit) { //пытается ранить корабль
-			routeShot = 1;
-
-			do {
-				x = userField.randomGenerate(10);
-				y = userField.randomGenerate(10);
-				resultShot = userField.shot(x, y);
-			}
-			while (resultShot == 0);
-
-			std::cout << "resultShot = " << resultShot << "  x = " << x << " Y = " << y << std::endl;
-
-			if (resultShot == 1)  //hit
-				isHit = true;
-		}
-
-		else { //добивает
-			if (routeShip == RoutesShip::NONE)  //направление корабля неизвестно, то выстреливаем в поисках направления
-			{
-				std::cout << "routeShip = NONE" << std::endl;
-
-				if ((userField.checkCoordinate(x, y - 1) && (resultShot = userField.shot(x, y - 1)) != 0) || (userField.checkCoordinate(x, y + 1) && (resultShot = userField.shot(x, y + 1)) != 0))  //Top or bottom
-					if (resultShot == 1)  //hit
-						routeShip = RoutesShip::VERTICAL;
-
-				else if ((userField.checkCoordinate(x + 1, y) && (resultShot = userField.shot(x + 1, y)) != 0) || (userField.checkCoordinate(x - 1, y) && (resultShot = userField.shot(x - 1, y)) != 0))  //Right or left
-					if (resultShot == 1)  //hit
-						routeShip = RoutesShip::HORIZONTAL;
-
-				if (resultShot == 3)
-					isHit = false;
-
-				std::cout << "routeShip = " << routeShip << std::endl;
-			}
-
-			else if (routeShip == RoutesShip::VERTICAL)
-			{
-				if (routeShot == 1)
-					for (int i = y; ; i--)
-						if (userField.checkCoordinate(x, i))
-						{
-							resultShot = userField.shot(x, i);
-
-							if (resultShot == 0) {
-								routeShot = 2;
-								break;
-							}
-
-							else if (resultShot == 4)
-								continue;
-
-							else if (resultShot == 3) {
-								isHit = false;
-								break;
-							}
-						}
-
-						else
-							routeShot = 2;
-
-				else if (routeShot == 2)
-					for (int i = y; ; i++)
-						if (userField.checkCoordinate(x, i))
-						{
-							resultShot = userField.shot(x, i);
-
-							if (resultShot == 0) {
-								routeShot = 1;
-								break;
-							}
-
-							else if (resultShot == 4)
-								continue;
-
-							else if (resultShot == 3) {
-								isHit = false;
-								break;
-							}
-						}
-
-						else
-							routeShot = 1;
-			}
-
-			else if (routeShip == RoutesShip::HORIZONTAL)
-			{
-				if (routeShot == 1)
-					for (int i = x; ; i++)
-						if (userField.checkCoordinate(x, i))
-						{
-							resultShot = userField.shot(x, i);
-
-							if (resultShot == 0) {
-								routeShot = 2;
-								break;
-							}
-
-							else if (resultShot == 4)
-								continue;
-
-							else if (resultShot == 3) {
-								isHit = false;
-								break;
-							}
-						}
-
-						else
-							routeShot = 2;
-
-				else if (routeShot == 2)
-					for (int i = x; ; i--)
-						if (userField.checkCoordinate(x, i))
-						{
-							resultShot = userField.shot(x, i);
-
-							if (resultShot == 0) {
-								routeShot = 1;
-								break;
-							}
-
-							else if (resultShot == 4)
-								continue;
-
-							else if (resultShot == 3) {
-								isHit = false;
-								break;
-							}
-						}
-
-						else
-							routeShot = 1;
-			}
-		}
-
-		std::cout << "resultShot(return) = " << resultShot << std::endl;
-		return resultShot;
-	}
-};*/
-
 class IIComputer
 {
 private:
@@ -603,6 +438,9 @@ private:
 
 	RoutesShip routeShip;
 
+	// 1 - top or right; 2 - bottom or left
+	int routeTryKill = 1;
+
 public:
 	IIComputer(FieldBattle& userField) : isHit{ false }, routeShip{RoutesShip::NONE} {
 		this->userField = userField;
@@ -613,12 +451,19 @@ public:
 		int resultShot;
 
 		if (isHit) {
+			std::cout << std::endl << "try kill" << std::endl;
+
 			if (routeShip == RoutesShip::NONE)
 			{
+				std::cout << "route = NONE" << std::endl;
+
 				int routeShot = FieldBattle::randomGenerate(4);
 
 				while (true)
 				{
+					std::cout << "while" << std::endl;
+					std::cout << "while routeShot = " << routeShot << std::endl;
+
 					switch (routeShot)
 					{
 					case 0:  //TOP
@@ -634,6 +479,8 @@ public:
 						resultShot = userField.shot(xShot - 1, yShot);
 						break;
 					}
+
+					std::cout << "while resultShot = " << resultShot << std::endl;
 
 					if (resultShot == FieldBattle::ResultShot::NOT_ALLOWED_SHOT) {
 						routeShot = FieldBattle::randomGenerate(4);
@@ -662,33 +509,99 @@ public:
 						break;
 					}
 				}
+
+				std::cout << "route = " << routeShip << std::endl;
 			}
 
 			else if (routeShip == RoutesShip::VERTICAL)
 			{
-				
+				std::cout << "route = VERTICAL" << std::endl;
+
+				for (int i = yShot + 1; ; (routeTryKill == 1 ? i++ : i--))
+				{
+					resultShot = userField.shot(xShot, i);
+
+					if (resultShot == FieldBattle::ResultShot::SHIP_ALREADY_WAS_WOUNDED_SHOT)
+						continue;
+
+					else if (resultShot == FieldBattle::ResultShot::PAST_SHOT) {
+						routeTryKill = 2;
+						break;
+					}
+
+					else if (resultShot == FieldBattle::ResultShot::KILL_SHOT) {
+						isHit = false;
+						routeTryKill = 1;
+						break;
+					}
+
+					else if (resultShot == FieldBattle::ResultShot::NOT_ALLOWED_SHOT)
+						routeTryKill = 2;
+				}
 			}
 
 			else if (routeShip == RoutesShip::HORIZONTAL)
 			{
-				
-			}
+				std::cout << "route = HORIZONTAL" << std::endl;
 
-			//std::cout << routeShip << std::endl;
+				for (int i = xShot + 1; ; (routeTryKill == 1 ? i++ : i--))
+				{
+					resultShot = userField.shot(i, yShot);
+
+					if (resultShot == FieldBattle::ResultShot::SHIP_ALREADY_WAS_WOUNDED_SHOT)
+						continue;
+
+					else if (resultShot == FieldBattle::ResultShot::PAST_SHOT) {
+						routeTryKill = 2;
+						break;
+					}
+
+					else if (resultShot == FieldBattle::ResultShot::KILL_SHOT) {
+						isHit = false;
+						routeTryKill = 1;
+						break;
+					}
+
+					else if (resultShot == FieldBattle::ResultShot::NOT_ALLOWED_SHOT)
+						routeTryKill = 2;
+				}
+			}
 		}
 
 		else { //пытается ранить корабль
+			std::cout << std::endl << "try hit" << std::endl;
+			routeShip = RoutesShip::NONE;
+
 			do {
 				xShot = userField.randomGenerate(10);
 				yShot = userField.randomGenerate(10);
+				//std::cout << checkNearShip(xShot, yShot) << std::endl;
 				resultShot = userField.shot(xShot, yShot);
-			} while (resultShot == FieldBattle::ResultShot::NOT_ALLOWED_SHOT || resultShot == FieldBattle::ResultShot::SHIP_ALREADY_WAS_WOUNDED_SHOT);
+			}
+			while (resultShot == FieldBattle::ResultShot::NOT_ALLOWED_SHOT || resultShot == FieldBattle::ResultShot::SHIP_ALREADY_WAS_WOUNDED_SHOT
+				|| checkNearShip(xShot, yShot));
 
 			if (resultShot == FieldBattle::ResultShot::HIT_SHOT)  //hit
 				isHit = true;
 		}
 
+		std::cout << "resultShot(" << xShot << ", " << yShot << ")" << " = " << resultShot << std::endl;
 		return resultShot;
+	}
+
+	bool checkNearShip(int x, int y) {
+		if ((userField.checkCoordinate(x - 1, y - 1) && userField.getField()[y - 1][x - 1] == FieldBattle::CellStatus::KILL)  //Top and left
+			|| (userField.checkCoordinate(x, y - 1) && userField.getField()[y - 1][x] == FieldBattle::CellStatus::KILL)  //Top
+			|| (userField.checkCoordinate(x + 1, y - 1) && userField.getField()[y - 1][x + 1] == FieldBattle::CellStatus::KILL)  //Top and right
+			|| (userField.checkCoordinate(x + 1, y) && userField.getField()[y][x + 1] == FieldBattle::CellStatus::KILL)  //Right
+			|| (userField.checkCoordinate(x + 1, y + 1) && userField.getField()[y + 1][x + 1] == FieldBattle::CellStatus::KILL)  //Right and bottom
+			|| (userField.checkCoordinate(x, y + 1) && userField.getField()[y + 1][x] == FieldBattle::CellStatus::KILL)  //Bottom
+			|| (userField.checkCoordinate(x - 1, y + 1) && userField.getField()[y + 1][x - 1] == FieldBattle::CellStatus::KILL)  //Bottom and left
+			|| (userField.checkCoordinate(x - 1, y) && userField.getField()[y][x - 1] == FieldBattle::CellStatus::KILL)  //Left
+		)
+			return true;  //near the ship, shot not allowed
+
+		return false;
 	}
 };
 
@@ -772,19 +685,15 @@ int main()
 					if (isRun) {
 						int resultShot = computerField.shot((mousePosition.x - 100) / 30, (mousePosition.y - 100) / 30);
 
-						if (resultShot == FieldBattle::ResultShot::PAST_SHOT
-							|| resultShot == FieldBattle::ResultShot::NOT_ALLOWED_SHOT
-							|| resultShot == FieldBattle::ResultShot::SHIP_ALREADY_WAS_WOUNDED_SHOT) {
+						if (resultShot == FieldBattle::ResultShot::PAST_SHOT)
 							isRun = false;  //running computer
-							//computerField.print();
-						}
 					}
 
 				break;
 			}
 		}
 
-		//std::cout << "for debug" << std::endl;
+		//std::cout << "fordebug" << std::endl;
 
 		window.clear(Color::Black);
 
@@ -806,7 +715,7 @@ int main()
 
 		//run computer
 		if (!isRun) {
-			std::cout << "run Computer" << std::endl;
+			//std::cout << "run Computer" << std::endl;
 			int computerResultShot = computerII.run();
 
 			if (computerResultShot == FieldBattle::ResultShot::PAST_SHOT)
